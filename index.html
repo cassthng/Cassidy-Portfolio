@@ -1,0 +1,1538 @@
+<title>Cassidy Photography</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=Oswald:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f4f0;
+    --card:#eeeae0;
+    --ink:#201d1a;
+    --ink-soft:#55504a;
+    --fog:#8a8171;
+    --line:#e0dace;
+    --rust:#a5602e;
+    color-scheme:light;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Hanken Grotesk',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:inherit;}
+  h1,h2,h3{text-wrap:balance; margin:0;}
+  p{margin:0;}
+  img{max-width:100%; display:block;}
+  button{font:inherit;}
+  input,textarea{font:inherit; color:inherit;}
+
+  .eyebrow{
+    font-family:'Hanken Grotesk',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:.76rem;
+    color:var(--fog);
+  }
+
+  .wrap{
+    max-width:1160px;
+    margin-inline:auto;
+    padding-inline:clamp(20px,4vw,48px);
+  }
+
+  /* ---------- scroll reveal (site-wide, replays every crossing) ----------
+     Elements pop up from below with a soft blur-and-scale, staggered
+     per item via --reveal-i (set in JS for grouped items like photo
+     grids and the teaser strip) so a whole row cascades in rather
+     than snapping into place all at once. Unlike a one-shot reveal,
+     .reveal-in is toggled on and off as each element crosses the
+     viewport edge, so the motion plays every time — scrolling back up
+     past a section un-plays it, and scrolling back down replays it,
+     the same cascade both ways. .reveal-left/.reveal-right add a
+     touch of side motion for a less mechanical, more natural feel on
+     paired blocks (e.g. the contact page's two columns). */
+  .reveal-init{
+    opacity:0;
+    transform:translateY(64px) scale(.92);
+    filter:blur(10px);
+    transition:opacity .85s cubic-bezier(.16,1,.3,1), transform .85s cubic-bezier(.16,1,.3,1), filter .85s cubic-bezier(.16,1,.3,1);
+    transition-delay:calc(var(--reveal-i,0) * 80ms);
+    will-change:transform, opacity, filter;
+  }
+  .reveal-init.reveal-left{transform:translate3d(-56px, 34px, 0) scale(.94);}
+  .reveal-init.reveal-right{transform:translate3d(56px, 34px, 0) scale(.94);}
+  .reveal-in{opacity:1; transform:none; filter:blur(0);}
+
+  /* ---------- page routing + transition ---------- */
+  .page{display:none;}
+  .page.active{display:block;}
+  .page-fade{opacity:0; transform:translateY(14px); transition:opacity .55s ease, transform .55s ease;}
+  .page-fade.in{opacity:1; transform:translateY(0);}
+
+  /* ---------- scroll progress ---------- */
+  #progress{
+    position:fixed; top:0; left:0;
+    height:3px; width:0%;
+    background:var(--rust);
+    z-index:70;
+  }
+
+  /* ================= NAV ================= */
+  header.nav{
+    position:sticky;
+    top:env(safe-area-inset-top,0px);
+    z-index:60;
+    background:rgba(245,244,240,.9);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding-block:16px;
+  }
+  .wordmark{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;
+    font-size:1.25rem;
+    letter-spacing:-.02em;
+    text-decoration:none;
+  }
+  .mark-dot{
+    width:16px; height:16px;
+    border-radius:50%;
+    border:2px solid var(--ink);
+    position:relative;
+    flex:none;
+  }
+  .mark-dot::after{
+    content:"";
+    position:absolute; inset:4px;
+    border-radius:50%;
+    background:var(--rust);
+  }
+  nav.links{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    font-size:.8rem;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+  nav.links a{
+    text-decoration:none;
+    color:var(--ink-soft);
+    padding:7px 15px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    transition:border-color .2s, color .2s, background .2s;
+  }
+  nav.links a:hover, nav.links a:focus-visible{
+    color:var(--ink);
+    border-color:var(--ink-soft);
+  }
+  nav.links a.active{
+    background:var(--ink);
+    color:var(--bg);
+    border-color:var(--ink);
+  }
+  .nav-right{display:flex; align-items:center; gap:14px;}
+  .ig-link{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:34px; height:34px;
+    border:1px solid var(--line);
+    border-radius:50%;
+    color:var(--ink-soft);
+    transition:border-color .2s, color .2s;
+    flex:none;
+  }
+  .ig-link:hover{color:var(--ink); border-color:var(--rust);}
+
+  /* ================= HERO ================= */
+  /* full-bleed image-stream corridor with the title floating centered on top */
+  .hero-stream{
+    position:relative;
+    overflow:hidden;
+    min-height:clamp(560px,92vh,920px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--bg);
+    container-type:inline-size;
+  }
+  .hero-stream-scrim{
+    position:absolute; inset:0;
+    background:radial-gradient(62% 66% at 50% 50%, rgba(245,244,240,.97) 0%, rgba(245,244,240,.94) 38%, rgba(245,244,240,.7) 58%, rgba(245,244,240,.25) 76%, rgba(245,244,240,0) 92%);
+    pointer-events:none;
+  }
+  .hero-stream-content{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:22px;
+    padding-block:48px;
+    text-shadow:0 2px 28px rgba(245,244,240,.9);
+  }
+  h1.display{margin:0;}
+  .display-line1{
+    display:block;
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:700;
+    font-size:clamp(1.5rem,4vw,2.5rem);
+    letter-spacing:-.02em;
+    color:var(--ink-soft);
+  }
+  .display-line2{
+    display:block;
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;
+    font-size:clamp(3.8rem,9.6vw,7.4rem);
+    line-height:.9;
+    letter-spacing:-.04em;
+  }
+  .hero-sub{
+    max-width:44ch;
+    font-size:clamp(1.15rem,1.6vw,1.3rem);
+    line-height:1.65;
+    color:var(--ink-soft);
+  }
+  .hero-meta{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:6px 10px;
+    font-size:.95rem;
+    color:var(--fog);
+  }
+  .hero-meta strong{color:var(--ink-soft); font-weight:500;}
+  .hero-meta .sep{color:var(--line);}
+  .bracket-line{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-size:.88rem;
+    letter-spacing:.02em;
+    color:var(--fog);
+  }
+  .hero-ctas{display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:4px;}
+  .btn{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-size:.8rem;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:13px 24px;
+    border-radius:999px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    transition:opacity .2s, border-color .2s, color .2s;
+  }
+  .btn-solid{background:var(--ink); color:var(--bg); font-weight:700;}
+  .btn-solid:hover{opacity:.86;}
+  .btn-line{border:1px solid var(--line); color:var(--ink-soft);}
+  .btn-line:hover{color:var(--ink); border-color:var(--rust);}
+
+  /* ---------- image-stream corridor ----------
+     Two rails of photos ride from far behind the hero toward the
+     viewer; perspective alone makes them grow and sweep outward
+     together. Everything is sized in cqw (% of .hero-stream's own
+     width) so the corridor holds its proportions at any size. The
+     scrim above fades the centre back toward the page background —
+     which lines up with where the corridor is naturally thinnest —
+     so the title stays legible while the rails stay vivid at the edges. */
+  .ish-perspective{
+    position:absolute; inset:0; pointer-events:none;
+    perspective:30cqw; perspective-origin:50% 55%;
+  }
+  .ish-3d{position:absolute; inset:0; transform-style:preserve-3d;}
+  .ish-card{position:absolute; overflow:hidden; backface-visibility:hidden;}
+  .ish-card img{width:100%; height:100%; object-fit:cover; display:block;}
+  @media (prefers-reduced-motion:reduce){
+    .ish-card{animation-play-state:paused;}
+  }
+
+  /* ================= SECTION HEADS ================= */
+  section{padding-block:clamp(52px,7vw,88px);}
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:20px;
+    margin-bottom:clamp(36px,5vw,56px);
+    flex-wrap:wrap;
+  }
+  h2.display-sm{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:700;
+    font-size:clamp(1.9rem,4vw,2.6rem);
+    letter-spacing:-.02em;
+  }
+  .head-right{display:flex; flex-direction:column; align-items:flex-end; gap:14px;}
+
+  /* ================= OVERVIEW (home) ================= */
+  .overview{border-top:1px solid var(--line); padding-block:clamp(52px,7vw,88px);}
+  .overview-copy{display:flex; flex-direction:column; gap:22px; max-width:70ch;}
+  .overview-copy p{
+    font-size:1.15rem;
+    line-height:1.75;
+    color:var(--ink-soft);
+    max-width:62ch;
+  }
+  .facts-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:24px 48px;
+    padding-top:22px;
+    border-top:1px solid var(--line);
+  }
+  .facts-row dt{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-size:.72rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--rust);
+    margin-bottom:5px;
+  }
+  .facts-row dd{margin:0; font-size:1.02rem; color:var(--ink-soft); line-height:1.55;}
+
+  /* ================= TEASER STRIP (home) ================= */
+  .teaser{border-top:1px solid var(--line); padding-block:clamp(52px,7vw,88px);}
+  .teaser-strip{display:flex; flex-wrap:wrap; align-items:flex-start; gap:24px;}
+  .teaser-strip a{
+    display:block;
+    height:clamp(150px,22vw,260px);
+    overflow:hidden;
+    background:var(--card);
+    flex:0 0 auto;
+  }
+  .teaser-strip img{height:100%; width:auto; max-width:none; display:block; transition:transform .5s ease;}
+  .teaser-strip a:hover img{transform:scale(1.045);}
+  .teaser-more{margin-top:28px;}
+
+  /* ================= HOME CTA ================= */
+  .home-cta{
+    border-top:1px solid var(--line);
+    padding-block:clamp(52px,7vw,88px);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:20px;
+  }
+  .home-cta h2{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;
+    font-size:clamp(1.9rem,4vw,2.6rem);
+    letter-spacing:-.02em;
+  }
+
+  /* ================= WORK / FILTERS ================= */
+  .filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:22px;
+    font-size:.86rem;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .filter-btn{
+    background:none;
+    border:none;
+    padding:2px 0;
+    color:var(--fog);
+    cursor:pointer;
+    border-bottom:1px solid transparent;
+  }
+  .filter-btn:hover{color:var(--ink);}
+  .filter-btn.active{
+    color:var(--ink);
+    border-color:var(--rust);
+  }
+  /* frames grouped by orientation; within each group every frame is cropped to a shared
+     ratio so tiles line up evenly, and each row centers itself on the page */
+  #frame-grid{display:flex; flex-direction:column; gap:96px;}
+
+  /* each collection (a trip, an event) groups its own wide/tall frames under a heading */
+  .collection{display:flex; flex-direction:column; gap:72px;}
+  .collection-title{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:700;
+    font-size:clamp(1.2rem,2.4vw,1.5rem);
+    letter-spacing:-.01em;
+    color:var(--ink-soft);
+    padding-bottom:18px;
+    border-bottom:1px solid var(--line);
+  }
+
+  .empty-state{
+    color:var(--fog);
+    font-size:1.05rem;
+    padding-block:24px;
+  }
+  .empty-state[hidden]{display:none;}
+
+  /* wide (landscape-orientation) frames: uniform 3:2 tiles, centered */
+  .work-wide{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px,340px));
+    justify-content:center;
+    gap:44px;
+  }
+  .work-wide .frame-visual{aspect-ratio:3/2;}
+
+  /* on the Overview tab, forces this trio into one centered 3-across row so the
+     middle photo reads as flanked rather than wrapping 2-then-1; only applies
+     there, so the Landscape/Street filtered views (more photos visible) keep
+     the normal auto-fit wrapping */
+  #frame-grid.is-overview .work-wide--triad{grid-template-columns:repeat(3, minmax(220px,300px));}
+
+  /* tall (portrait-orientation) frames: uniform 2:3 tiles, centered */
+  .work-tall{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px,280px));
+    justify-content:center;
+    gap:44px 36px;
+  }
+  .work-tall .frame-visual{aspect-ratio:2/3;}
+
+  .frame-visual{
+    position:relative;
+    overflow:hidden;
+    background:var(--card);
+    cursor:pointer;
+    display:block;
+  }
+  .frame-visual img{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center;
+    transition:transform .6s ease;
+  }
+  .frame:hover .frame-visual img, .frame:focus-within .frame-visual img{transform:scale(1.05);}
+
+  /* ================= LIGHTBOX ================= */
+  #lightbox{
+    position:fixed; inset:0;
+    background:rgba(15,13,11,.94);
+    z-index:100;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:clamp(16px,5vw,48px);
+  }
+  #lightbox[hidden]{display:none;}
+  .lb-inner{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    max-width:100%;
+    max-height:100%;
+  }
+  .lb-inner img{
+    max-width:88vw;
+    max-height:86vh;
+    width:auto; height:auto;
+    object-fit:contain;
+    border:1px solid rgba(245,244,240,.15);
+  }
+  .lb-close, .lb-nav{
+    position:fixed;
+    background:none;
+    border:none;
+    color:#f5f4f0;
+    cursor:pointer;
+    font-family:'Hanken Grotesk',sans-serif;
+  }
+  .lb-close{top:20px; right:24px; font-size:1.6rem; line-height:1; padding:8px;}
+  .lb-nav{top:50%; transform:translateY(-50%); font-size:1.8rem; padding:12px;}
+  .lb-prev{left:8px;}
+  .lb-next{right:8px;}
+  .lb-close:hover, .lb-nav:hover{color:var(--rust);}
+
+  /* ================= CONTACT ================= */
+  .contact-panel{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:clamp(32px,6vw,80px);
+    align-items:start;
+  }
+  .contact-copy{display:flex; flex-direction:column; align-items:flex-start; gap:24px;}
+  .contact-copy h2{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;
+    font-size:clamp(2.6rem,6vw,3.6rem);
+    letter-spacing:-.02em;
+  }
+  .contact-email{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-size:clamp(1.05rem,2vw,1.25rem);
+    color:var(--ink);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+    transition:border-color .2s, color .2s;
+  }
+  .contact-email:hover{color:var(--rust); border-color:var(--rust);}
+  .contact-ig{
+    color:var(--ink);
+    display:inline-flex;
+    transition:color .2s;
+  }
+  .contact-ig:hover{color:var(--rust);}
+  .contact-portrait{
+    width:100%;
+    max-width:460px;
+    aspect-ratio:2/3;
+    overflow:hidden;
+    background:var(--card);
+    margin-top:12px;
+  }
+  .contact-portrait img{width:100%; height:100%; object-fit:cover; object-position:top center; display:block;}
+
+  .contact-form{display:flex; flex-direction:column; gap:36px; margin-top:8px;}
+  .contact-form .eyebrow{font-family:'Hanken Grotesk',sans-serif; font-weight:600;}
+  .field{display:flex; flex-direction:column; gap:14px;}
+  .field label{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:700;
+    font-size:1.3rem;
+    letter-spacing:-.01em;
+    color:var(--ink);
+  }
+  .field label .req{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-weight:400;
+    font-size:.92rem;
+    color:var(--rust);
+    margin-left:6px;
+  }
+  .field input, .field textarea{
+    background:var(--bg);
+    border:1.5px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+    font-family:'Hanken Grotesk',sans-serif;
+    font-size:1.05rem;
+    color:var(--ink);
+    width:100%;
+    transition:border-color .2s;
+  }
+  .field textarea{resize:vertical; min-height:130px;}
+  .field input:focus, .field textarea:focus{outline:none; border-color:var(--rust);}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .field-group{display:flex; flex-direction:column; gap:14px;}
+  .field-group-title{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:700;
+    font-size:1.3rem;
+    letter-spacing:-.01em;
+    color:var(--ink);
+  }
+  .field-group .form-row .field label{font-size:1.1rem;}
+  .contact-form .btn-solid{border-radius:14px; padding:16px 30px; font-size:.92rem;}
+  .form-status{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-size:.78rem;
+    color:var(--rust);
+    min-height:1em;
+  }
+
+  /* ================= FOOTER ================= */
+  footer{
+    border-top:1px solid var(--line);
+    padding-block:22px;
+    padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));
+  }
+  .footer-row{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    text-transform:uppercase;
+    font-size:.88rem;
+    letter-spacing:.08em;
+    color:var(--ink);
+  }
+  .footer-row a{text-decoration:none;}
+  .footer-row a:hover{color:var(--rust);}
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width:820px){
+    .contact-panel{grid-template-columns:1fr;}
+    /* the forced 3-across Overview row only makes sense once there's room
+       for three ~220px columns; below that it reverts to normal wrapping
+       so it never forces horizontal overflow on a phone */
+    #frame-grid.is-overview .work-wide--triad{grid-template-columns:repeat(auto-fit, minmax(200px,1fr));}
+  }
+  @media (max-width:560px){
+    .hero-stream{min-height:clamp(480px,86vh,760px);}
+  }
+  @media (max-width:640px){
+    .nav-row{flex-wrap:wrap; row-gap:10px;}
+    .work-wide{grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:24px;}
+    .work-tall{grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:28px 20px;}
+    #frame-grid{gap:56px;}
+    .collection{gap:40px;}
+    .head-right{align-items:flex-start;}
+    .form-row{grid-template-columns:1fr;}
+    .teaser-strip a{height:clamp(120px,38vw,190px);}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    .frame-visual img, .teaser-strip img{transition:none;}
+    .reveal-init{opacity:1; transform:none; filter:none; transition:none;}
+    .page-fade{opacity:1; transform:none; transition:none;}
+  }
+</style>
+
+<div id="progress"></div>
+
+<header class="nav">
+  <div class="wrap nav-row">
+    <a href="#/" class="wordmark" data-page="home"><span class="mark-dot"></span>Cassidy</a>
+    <nav class="links">
+      <a href="#/" data-page="home">Home</a>
+      <a href="#/works" data-page="works">Works</a>
+      <a href="#/contact" data-page="contact">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <a class="ig-link" href="https://www.instagram.com/cassidy.films/" target="_blank" rel="noopener" aria-label="Cassidy on Instagram">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= HOME ================= -->
+  <section id="page-home" class="page active">
+
+    <div class="hero-stream" id="hero-frame">
+      <div class="ish-perspective" aria-hidden="true">
+        <div class="ish-3d" id="ish-3d"></div>
+      </div>
+      <div class="hero-stream-scrim" aria-hidden="true"></div>
+      <div class="hero-stream-content wrap">
+        <h1 class="display">
+          <span class="display-line2">Cassidy's</span>
+          <span class="display-line1">Photography</span>
+        </h1>
+        <p class="hero-sub">Street, landscape, wedding and event work, shot on both film and digital — whichever the moment calls for.</p>
+        <div class="hero-meta">
+          <span>Based in <strong>Singapore</strong></span>
+          <span class="sep">·</span>
+          <span>Shooting since <strong>2019</strong></span>
+          <span class="sep">·</span>
+          <span>Available for <strong>bookings</strong></span>
+        </div>
+        <div class="hero-ctas">
+          <a href="#/works" class="btn btn-solid">View Works</a>
+          <a href="#/contact" class="btn btn-line">Get in touch</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap overview">
+      <div class="section-head reveal">
+        <div>
+          <p class="eyebrow">Overview</p>
+          <h2 class="display-sm">Working across street, landscape, weddings and events.</h2>
+        </div>
+      </div>
+      <div class="overview-copy reveal">
+        <p>I shoot both film and digital formats, letting the medium serve the story. Whether documenting quiet landscapes, street scenes caught while travelling, or the once-in-a-lifetime moments of weddings and events, my approach is driven by a single instinct: capture the moment that feels authentically true.</p>
+        <p>The process is intentionally raw. Film rolls are developed and scanned by hand, so nothing here is masked by a preset — colours are born from real chemistry or captured straight from the sensor, and the natural imperfections stay exactly where they belong.</p>
+        <dl class="facts-row">
+          <div><dt>Cameras</dt><dd>Nikon F2 · Canon R8 · Fuji GW690II</dd></div>
+          <div><dt>Genres</dt><dd>Street · Landscape · Wedding · Events</dd></div>
+          <div><dt>Based</dt><dd>Singapore, available to travel</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="wrap teaser">
+      <div class="section-head reveal">
+        <div>
+          <p class="eyebrow">A Few Frames</p>
+          <h2 class="display-sm">From the portfolio</h2>
+        </div>
+      </div>
+      <div class="teaser-strip">
+        <a href="#/works/landscape"><img src="img/07-fuji-a.jpg" alt="Mt. Fuji at dusk with a cloud trailing off the peak"></a>
+        <a href="#/works/street"><img src="img/04-komachi-plaza.jpg" alt="Two people waiting on a street corner outside Komachi Plaza, Kamakura"></a>
+        <a href="#/works/wedding"><img src="img/13-wedding-kiss-a.jpg" alt="A couple kissing at the altar as the wedding party applauds"></a>
+        <a href="#/works/wedding"><img src="img/15-wedding-altar.jpg" alt="A couple seated before the altar, seen from behind the pews"></a>
+        <a href="#/works/landscape"><img src="img/23-hdb-dragon.jpg" alt="A dragon sculpture beneath Singapore housing blocks"></a>
+        <a href="#/works/street"><img src="img/19-hk-foodstall.jpg" alt="A night food stall in Hong Kong with customers gathered around it"></a>
+        <a href="#/works/events"><img src="img/32-catholic-pitch-welcome.jpg" alt="A welcome screen reading Catholic Pitch above a full room of guests"></a>
+      </div>
+      <p class="teaser-more"><a href="#/works" class="btn btn-line">View all work →</a></p>
+    </div>
+
+    <div class="wrap home-cta reveal">
+      <h2>Have a project in mind?</h2>
+      <a href="#/contact" class="btn btn-solid">Get in touch</a>
+    </div>
+
+  </section>
+
+  <!-- ================= WORKS ================= -->
+  <section id="page-works" class="page">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <p class="eyebrow">Portfolio</p>
+          <h2 class="display-sm">Works</h2>
+        </div>
+        <div class="head-right">
+          <div class="filters" role="tablist" aria-label="Filter work by genre">
+            <button class="filter-btn active" data-filter="all">Overview</button>
+            <button class="filter-btn" data-filter="landscape">Landscape</button>
+            <button class="filter-btn" data-filter="street">Street</button>
+            <button class="filter-btn" data-filter="wedding">Wedding</button>
+            <button class="filter-btn" data-filter="events">Events</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="frame-grid">
+
+        <div class="collection" data-collection="japan">
+          <h3 class="collection-title">Japan</h3>
+
+          <div class="work-wide">
+
+            <article class="frame" data-genre="landscape" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/07-fuji-a.jpg" alt="Mt. Fuji at dusk with a cloud trailing off the peak">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="landscape" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/51-japan-fuji-lake.jpg" alt="Mt. Fuji beyond a lake with sunlit reeds and sparkling water">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/20-kyoto-yojiya.jpg" alt="Two women in kimono walking up to the Yojiya shop in Kyoto">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/21-coffee-doughnuts.jpg" alt="A coffee and doughnut shop with a black SUV parked outside">
+              </div>
+            </article>
+
+          </div>
+
+          <div class="work-tall">
+
+            <article class="frame" data-genre="landscape" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/05-first-snow.jpg" alt="A snowboarder looking out at a snowy ski town from under a shelter">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="landscape" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/02-jigokudani.jpg" alt="A snow-covered path through Jigokudani, Nagano">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/54-japan-snowman.jpg" alt="A snowman in front of a traditional wooden house with a stacked woodpile">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/22-crosswalk.jpg" alt="Pedestrians waiting at a sunlit street crossing">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/48-japan-peace-mural.jpg" alt="Pedestrians walking past a large Peace on Earth mural on a city corner">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/04-komachi-plaza.jpg" alt="Two people waiting on a street corner outside Komachi Plaza, Kamakura">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/47-japan-omikuji.jpg" alt="A child reaching up to tie a wish paper among rows of omikuji at a shrine">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/03-enoshima.jpg" alt="Two riders and a motorcycle on the Enoshima coast road with Mt. Fuji behind">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/55-japan-beach-sunset.jpg" alt="Friends posing for a photo on the beach at sunset with Mt. Fuji in the distance">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/56-japan-musicplaza.jpg" alt="A masked pedestrian walking past the Music Plaza storefront in low winter light">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/06-tokyo-tower.jpg" alt="Tokyo Tower lit up at night, seen down a narrow street">
+              </div>
+            </article>
+
+          </div>
+        </div>
+
+        <div class="collection" data-collection="hongkong">
+          <h3 class="collection-title">Hong Kong</h3>
+
+          <div class="work-tall">
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/18-hk-street.jpg" alt="A quiet Hong Kong street lined with high-rise apartment blocks">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/19-hk-foodstall.jpg" alt="A night food stall in Hong Kong with customers gathered around it">
+              </div>
+            </article>
+
+          </div>
+        </div>
+
+        <div class="collection" data-collection="singapore">
+          <h3 class="collection-title">Singapore</h3>
+
+          <div class="work-wide work-wide--triad">
+
+            <article class="frame" data-genre="landscape" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/23-hdb-dragon.jpg" alt="A dragon sculpture beneath Singapore housing blocks">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="landscape" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/24-supertrees-bw.jpg" alt="Black and white view of the Supertrees at Gardens by the Bay with a walking bridge">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="landscape" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/26-sunset-skyline-a.jpg" alt="A city skyline silhouetted against an orange sunset, seen from a window">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="landscape" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/27-sunset-skyline-b.jpg" alt="A pink and orange sunset over a city skyline with a rail line below">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/57-singapore-carpark-sunset.jpg" alt="Cars silhouetted in a car park beneath a pink and purple sunset sky">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/30-hail-mary-wide.jpg" alt="A shrine reading Hail Mary Full of Grace beside a church building">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/53-singapore-shophouses.jpg" alt="A photographer shooting a row of restored shophouses across a quiet street">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/31-wire-sculpture.jpg" alt="A wire-frame human sculpture against a glass office building">
+              </div>
+            </article>
+
+          </div>
+
+          <div class="work-tall">
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/52-singapore-temple.jpg" alt="Looking up at the tiered red and white roofs of the Buddha Tooth Relic Temple">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/17-asphodel-inn.jpg" alt="The corner facade of the Asphodel Inn in Singapore, with its vintage sign">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/29-hail-mary-close.jpg" alt="A statue of Mary beneath a Hail Mary Full of Grace sign">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/58-singapore-sacredheart.jpg" alt="Three family members smiling in front of Sacred Heart Hall, one leaning on a cane">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/49-singapore-stained-glass.jpg" alt="Gothic stained glass windows above a church altar with candles and angel statues">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/28-church-interior.jpg" alt="The nave of a church during a service, looking toward the altar">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/25-caution-sign.jpg" alt="A caution road sign glowing under a streetlight at night">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/50-singapore-crosswalk-portrait.jpg" alt="A woman smiling on a crosswalk along a Chinatown shophouse street">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="street" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/59-singapore-cake.jpg" alt="A cream cake topped with strawberries, blueberries and grapes beside a vase of flowers">
+              </div>
+            </article>
+
+          </div>
+        </div>
+
+        <div class="collection" data-collection="wedding-dg">
+          <h3 class="collection-title">Dillon &amp; Gzenn's Wedding</h3>
+
+          <div class="work-wide">
+
+            <article class="frame" data-genre="wedding" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/37-wedding-blessing.jpg" alt="The officiant blessing the couple at the altar as groomsmen look on">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="wedding" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/11-wedding-group-b.jpg" alt="Wedding party gathered at the altar">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="wedding" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/14-wedding-kiss-b.jpg" alt="The couple sharing a kiss as confetti falls around them">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="wedding" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/13-wedding-kiss-a.jpg" alt="The couple kissing at the altar as the wedding party applauds">
+              </div>
+            </article>
+
+          </div>
+
+          <div class="work-tall">
+
+            <article class="frame" data-genre="wedding" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/10-wedding-vows.jpg" alt="A couple reading their vows at the pulpit">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="wedding" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/12-wedding-aisle.jpg" alt="A newly married couple laughing while walking down the aisle">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="wedding" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/15-wedding-altar.jpg" alt="A couple seated before the altar, seen from behind the pews">
+              </div>
+            </article>
+
+          </div>
+        </div>
+
+        <div class="collection" data-collection="catholic-pitch">
+          <h3 class="collection-title">Catholic Pitch</h3>
+
+          <div class="work-wide">
+
+            <article class="frame" data-genre="events" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/43-catholic-pitch-registration.jpg" alt="The registration team smiling behind the welcome table">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/42-catholic-pitch-couple.jpg" alt="A couple posing together at the event venue">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/44-catholic-pitch-conversation.jpg" alt="Two guests deep in conversation over drinks">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/46-catholic-pitch-crowd.jpg" alt="A wide view of the crowd facing the stage and screen">
+              </div>
+            </article>
+
+          </div>
+
+          <div class="work-tall">
+
+            <article class="frame" data-genre="events" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/32-catholic-pitch-welcome.jpg" alt="A welcome screen reading Catholic Pitch above a full room of guests">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/34-catholic-pitch-meet-brandon.jpg" alt="A host presenting a guest introduction slide to a laughing audience">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/38-catholic-pitch-dinner.jpg" alt="Guests laughing and talking over dinner at the event">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="true">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/35-catholic-pitch-portrait.jpg" alt="Two guests posing together with peace signs at the event">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/39-catholic-pitch-cheer.jpg" alt="A group of guests laughing together at their table">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/45-catholic-pitch-phones.jpg" alt="A group of guests laughing together over their phones">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/40-catholic-pitch-presenter.jpg" alt="A host presenting to the room in front of the Catholic Pitch welcome screen">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/41-catholic-pitch-booth.jpg" alt="Two guests posing together at the welcome booth">
+              </div>
+            </article>
+
+            <article class="frame" data-genre="events" data-featured="false">
+              <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
+                <img src="img/36-catholic-pitch-bar.jpg" alt="Guests seated along a bar counter during the evening">
+              </div>
+            </article>
+
+          </div>
+        </div>
+
+      </div>
+
+      <p class="empty-state" id="empty-state" hidden>More from this category is on its way — check back soon.</p>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="page-contact" class="page">
+    <div class="wrap">
+      <div class="contact-panel">
+        <div class="contact-copy reveal reveal-left">
+          <h2>Get in touch.</h2>
+          <a class="contact-email" href="mailto:thngcassidy@gmail.com" target="_blank" rel="noopener">thngcassidy@gmail.com</a>
+          <a class="contact-ig" href="https://www.instagram.com/cassidy.films/" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <div class="contact-portrait">
+            <img src="img/16-portrait.jpg" alt="Cassidy sitting on a bench in a cedar forest, camera in hand">
+          </div>
+        </div>
+
+        <form class="contact-form reveal reveal-right" id="contact-form">
+          <p class="eyebrow">Got a project in mind? Fill this in.</p>
+
+          <div class="field-group">
+            <p class="field-group-title">Your Name</p>
+            <div class="form-row">
+              <div class="field">
+                <label for="cf-first-name">First Name<span class="req">(required)</span></label>
+                <input type="text" id="cf-first-name" name="first-name" required>
+              </div>
+              <div class="field">
+                <label for="cf-last-name">Last Name<span class="req">(required)</span></label>
+                <input type="text" id="cf-last-name" name="last-name" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="cf-email">Email<span class="req">(required)</span></label>
+            <input type="email" id="cf-email" name="email" required>
+          </div>
+
+          <div class="field">
+            <label for="cf-website">Website or Social Account</label>
+            <input type="text" id="cf-website" name="website">
+          </div>
+
+          <div class="field">
+            <label for="cf-brand">Tell me a bit about your brand, business, product, etc.<span class="req">(required)</span></label>
+            <textarea id="cf-brand" name="brand" required></textarea>
+          </div>
+
+          <div class="field">
+            <label for="cf-needs">Tell me a bit about your photography needs<span class="req">(required)</span></label>
+            <textarea id="cf-needs" name="needs" required></textarea>
+          </div>
+
+          <div>
+            <button type="submit" class="btn btn-solid">Send</button>
+          </div>
+          <p class="form-status" id="form-status"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <div class="footer-row">
+    <span>© 2026 Cassidy Thng — Photography</span>
+    <a href="https://www.instagram.com/cassidy.films/" target="_blank" rel="noopener">@cassidy.films</a>
+  </div>
+</footer>
+
+<div id="lightbox" hidden>
+  <button class="lb-close" id="lb-close" aria-label="Close">&times;</button>
+  <button class="lb-nav lb-prev" id="lb-prev" aria-label="Previous photo">&#8249;</button>
+  <button class="lb-nav lb-next" id="lb-next" aria-label="Next photo">&#8250;</button>
+  <div class="lb-inner">
+    <img id="lb-img" src="" alt="">
+  </div>
+</div>
+
+<script>
+  (function(){
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ================= PAGE ROUTER ================= */
+    var pages = document.querySelectorAll('.page');
+    var navLinks = document.querySelectorAll('nav.links a');
+    var fadeTargets = document.querySelectorAll('#page-works .wrap, #page-contact .wrap');
+    var currentPage = 'home';
+
+    function setActivePage(name){
+      pages.forEach(function(p){
+        p.classList.toggle('active', p.id === 'page-' + name);
+      });
+      navLinks.forEach(function(l){
+        l.classList.toggle('active', l.getAttribute('data-page') === name);
+      });
+      currentPage = name;
+      window.scrollTo(0, 0);
+      if (!reduceMotion) {
+        fadeTargets.forEach(function(el){
+          var onThisPage = el.closest('.page').id === 'page-' + name;
+          if (onThisPage) {
+            el.classList.remove('in');
+            el.classList.add('page-fade');
+            requestAnimationFrame(function(){
+              requestAnimationFrame(function(){ el.classList.add('in'); });
+            });
+          }
+        });
+      }
+      if (name === 'works') { applyFilterFromRoute(); }
+      onScroll();
+    }
+
+    function routeFromHash(){
+      var h = location.hash.replace(/^#\/?/, '');
+      var parts = h.split('/').filter(Boolean);
+      if (parts[0] === 'works') return {page:'works', filter: parts[1] || 'all'};
+      if (parts[0] === 'contact') return {page:'contact', filter:null};
+      return {page:'home', filter:null};
+    }
+
+    var pendingFilter = 'all';
+    function applyFilterFromRoute(){
+      setFilter(pendingFilter, false);
+    }
+
+    function syncFromHash(){
+      var r = routeFromHash();
+      pendingFilter = r.filter || 'all';
+      setActivePage(r.page);
+    }
+
+    window.addEventListener('hashchange', syncFromHash);
+
+    /* ================= filters (works page) ================= */
+    var buttons = document.querySelectorAll('.filter-btn');
+    var frames = document.querySelectorAll('#frame-grid .frame');
+
+    function visibleFrames(){
+      return Array.prototype.filter.call(frames, function(f){ return !f.hidden; });
+    }
+
+    var emptyState = document.getElementById('empty-state');
+
+    function setFilter(filter, pushHash){
+      buttons.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-filter') === filter); });
+      var grid = document.getElementById('frame-grid');
+      if (grid) grid.classList.toggle('is-overview', filter === 'all');
+      frames.forEach(function(f){
+        // "All" shows a curated selection rather than every frame — more keeps getting
+        // added over time, and a hand-picked set reads better than the full archive.
+        var show = filter === 'all' ? f.getAttribute('data-featured') === 'true' : f.getAttribute('data-genre') === filter;
+        f.hidden = !show;
+      });
+      document.querySelectorAll('.work-wide, .work-tall').forEach(function(group){
+        var anyVisible = group.querySelector('.frame:not([hidden])');
+        group.hidden = !anyVisible;
+      });
+      document.querySelectorAll('.collection').forEach(function(col){
+        var anyVisible = col.querySelector('.frame:not([hidden])');
+        col.hidden = !anyVisible;
+      });
+      if (emptyState) emptyState.hidden = visibleFrames().length > 0;
+      if (pushHash) {
+        location.hash = '#/works' + (filter === 'all' ? '' : '/' + filter);
+      }
+    }
+
+    buttons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        setFilter(btn.getAttribute('data-filter'), true);
+      });
+    });
+
+    /* ---------- contact form (mailto handoff — static site, no backend) ---------- */
+    var form = document.getElementById('contact-form');
+    var status = document.getElementById('form-status');
+    if (form) {
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var firstName = document.getElementById('cf-first-name').value.trim();
+        var lastName = document.getElementById('cf-last-name').value.trim();
+        var email = document.getElementById('cf-email').value.trim();
+        var website = document.getElementById('cf-website').value.trim();
+        var brand = document.getElementById('cf-brand').value.trim();
+        var needs = document.getElementById('cf-needs').value.trim();
+        if (!firstName || !lastName || !email || !brand || !needs) return;
+        var name = firstName + ' ' + lastName;
+        var subject = encodeURIComponent('Portfolio inquiry from ' + name);
+        var bodyLines = [
+          'Brand / business / product:',
+          brand,
+          '',
+          'Photography needs:',
+          needs,
+          '',
+          '— ' + name + ' (' + email + ')'
+        ];
+        if (website) bodyLines.splice(6, 0, 'Website / social: ' + website, '');
+        var body = encodeURIComponent(bodyLines.join('\n'));
+        window.open('mailto:thngcassidy@gmail.com?subject=' + subject + '&body=' + body, '_blank');
+        status.textContent = 'Opening your email app…';
+      });
+    }
+
+    /* ---------- scroll reveal (visible from load) ----------
+       Each photo grid and the teaser strip gets its items tagged
+       .reveal individually (rather than the whole block at once) with
+       a --reveal-i index, so the CSS stagger above makes them cascade
+       in one after another as the section crosses into view. The
+       index is capped and cycled per group so a long collection still
+       finishes its cascade quickly instead of trailing on forever. */
+    var STAGGER_CAP = 8;
+    document.querySelectorAll('.collection').forEach(function(col){
+      var items = col.querySelectorAll('.collection-title, .frame');
+      items.forEach(function(el, i){
+        el.classList.add('reveal');
+        el.style.setProperty('--reveal-i', i % STAGGER_CAP);
+      });
+    });
+    document.querySelectorAll('.teaser-strip').forEach(function(strip){
+      strip.querySelectorAll('a').forEach(function(el, i){
+        el.classList.add('reveal');
+        el.style.setProperty('--reveal-i', i % STAGGER_CAP);
+      });
+    });
+
+    if (!reduceMotion && 'IntersectionObserver' in window) {
+      var revealEls = document.querySelectorAll('.reveal');
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          // Toggle rather than unobserve, so the reveal replays every
+          // time an element crosses into or out of view — scrolling
+          // back up un-plays a section the same way scrolling down
+          // played it, instead of it only ever happening once.
+          entry.target.classList.toggle('reveal-in', entry.isIntersecting);
+        });
+      }, {threshold: .12, rootMargin: '0px 0px -40px 0px'});
+      revealEls.forEach(function(el){
+        el.classList.add('reveal-init');
+        io.observe(el);
+      });
+    }
+
+    /* ---------- scroll progress (rAF throttled) ---------- */
+    var progress = document.getElementById('progress');
+    var ticking = false;
+    function onScroll(){
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        var doc = document.documentElement;
+        var scrollTop = window.scrollY;
+        var max = doc.scrollHeight - doc.clientHeight;
+        if (progress) progress.style.width = (max > 0 ? (scrollTop / max) * 100 : 0) + '%';
+        ticking = false;
+      });
+    }
+    window.addEventListener('scroll', onScroll, {passive: true});
+
+    /* ---------- hero image-stream corridor ----------
+       Two rails of cards ride from far behind the frame toward the
+       viewer. Perspective alone does the work that looks like two
+       animations: as a card's z grows it gets bigger *and* its screen
+       x sweeps outward, because the projection scales position and
+       size by the same factor. Depth is authored as apparent size
+       (geometric growth) so consecutive cards keep a constant size
+       ratio and the ribbon never tears, near or far. All lengths are
+       in cqw — % of the corridor's own width — so it holds its
+       proportions at any size. */
+    (function(){
+      var frame = document.getElementById('hero-frame');
+      var mount = document.getElementById('ish-3d');
+      if (!frame || !mount) return;
+
+      /* Portrait and landscape sources are kept as two distinct, internally
+         uniform card shapes — every portrait card is exactly the same size
+         as every other portrait card, and likewise for landscape — rather
+         than force both into one crop. Both shapes share the same card
+         *height* (P.cardHeight), only width differs by aspect ratio, which
+         keeps the single depth/rail keyframe trajectory below valid for
+         every card regardless of shape (see ishKeyframes). */
+      var ISH_IMAGES = [
+        {src:'img/01-music-plaza.jpg', alt:'A pedestrian passing Music Plaza in Tokyo, lit by low afternoon sun', orientation:'portrait'},
+        {src:'img/07-fuji-a.jpg', alt:'Mt. Fuji at dusk with a cloud trailing off the peak', orientation:'landscape'},
+        {src:'img/03-enoshima.jpg', alt:'Two riders and a motorcycle on the Enoshima coast road with Mt. Fuji behind', orientation:'portrait'},
+        {src:'img/24-supertrees-bw.jpg', alt:'Black and white view of the Supertrees at Gardens by the Bay with a walking bridge', orientation:'landscape'},
+        {src:'img/06-tokyo-tower.jpg', alt:'Tokyo Tower lit up at night, seen down a narrow street', orientation:'portrait'},
+        {src:'img/26-sunset-skyline-a.jpg', alt:'A city skyline silhouetted against an orange sunset, seen from a window', orientation:'landscape'},
+        {src:'img/55-japan-beach-sunset.jpg', alt:'Friends posing for a photo on the beach at sunset with Mt. Fuji in the distance', orientation:'portrait'},
+        {src:'img/51-japan-fuji-lake.jpg', alt:'Mt. Fuji beyond a lake with sunlit reeds and sparkling water', orientation:'landscape'},
+        {src:'img/52-singapore-temple.jpg', alt:'Looking up at the tiered red and white roofs of the Buddha Tooth Relic Temple', orientation:'portrait'},
+        {src:'img/57-singapore-carpark-sunset.jpg', alt:'Cars silhouetted in a car park beneath a pink and purple sunset sky', orientation:'landscape'},
+        {src:'img/50-singapore-crosswalk-portrait.jpg', alt:'A woman smiling on a crosswalk along a Chinatown shophouse street', orientation:'portrait'},
+        {src:'img/53-singapore-shophouses.jpg', alt:'A photographer shooting a row of restored shophouses across a quiet street', orientation:'landscape'}
+      ];
+
+      var P = {
+        perspective: 30, cardHeight: 25, cardRadius: 0.4,
+        birthHeight: 2.6, exitHeight: 46, railBirth: -11, railExit: 44,
+        fan: 3.3, turnBirth: 3, turnExit: 12, stops: 24
+      };
+      var CARD_ASPECT = {portrait: 2 / 3, landscape: 3 / 2}; // width / height
+      var CARDS = ISH_IMAGES.length;
+      var SPEED = 22;   // seconds per full corridor traversal
+      var AXIS = 55;    // vertical placement of the corridor's axis, % of height
+
+      /* The rail/turn constants above were fitted for one reference card
+         width (portrait). A wider card centred on the same rail position
+         sticks out further past the frame edge, so a landscape card would
+         still be visibly on-screen when its animation loops back to 0% —
+         the "glitch" of a card popping mid-view. Pushing each orientation's
+         *exit* rail out by its own extra half-width keeps every shape's
+         inner edge clearing the frame at the same point the portrait
+         reference was tuned for, so the loop seam stays off-screen for
+         both. Rotation is also kept modest (turnExit above), since tilting
+         a wide card hard on its Y-axis reads as a stretched, skewed image —
+         narrow cards hide that foreshortening much better than wide ones. */
+      var refHalfWidth = (P.cardHeight * CARD_ASPECT.portrait) / 2;
+
+      function ishKeyframes(dir, name, cardHalfWidth){
+        var railExit = P.railExit + (cardHalfWidth - refHalfWidth);
+        var steps = [];
+        for (var s = 0; s <= P.stops; s++) {
+          var u = s / P.stops;
+          var scale = (P.birthHeight / P.cardHeight) * Math.pow(P.exitHeight / P.birthHeight, u);
+          var z = P.perspective * (1 - 1 / scale);
+          var rail = railExit - (railExit - P.railBirth) * Math.pow(1 - u, P.fan);
+          var turn = P.turnBirth + (P.turnExit - P.turnBirth) * u;
+          steps.push(
+            (u * 100).toFixed(2) + '%{transform:translate3d(' +
+            (dir * rail).toFixed(2) + 'cqw,0,' + z.toFixed(2) + 'cqw) rotateY(' +
+            (-dir * turn).toFixed(2) + 'deg)}'
+          );
+        }
+        return '@keyframes ' + name + '{' + steps.join('') + '}';
+      }
+
+      var ORIENTATIONS = ['portrait', 'landscape'];
+      var ANIM_NAME = {}; // e.g. ANIM_NAME.portrait.right = 'ish-right-portrait'
+      var styleText = '';
+      ORIENTATIONS.forEach(function(orientation){
+        var halfWidth = (P.cardHeight * CARD_ASPECT[orientation]) / 2;
+        var right = 'ish-right-' + orientation;
+        var left = 'ish-left-' + orientation;
+        styleText += ishKeyframes(1, right, halfWidth) + ishKeyframes(-1, left, halfWidth);
+        ANIM_NAME[orientation] = {right: right, left: left};
+      });
+      var styleEl = document.createElement('style');
+      styleEl.textContent = styleText;
+      document.head.appendChild(styleEl);
+
+      frame.querySelector('.ish-perspective').style.perspectiveOrigin = '50% ' + AXIS + '%';
+
+      ['right', 'left'].forEach(function(side){
+        for (var i = 0; i < CARDS; i++) {
+          var img = ISH_IMAGES[i % ISH_IMAGES.length];
+          var orientation = img.orientation || 'portrait';
+          var cardWidth = P.cardHeight * CARD_ASPECT[orientation];
+          var el = document.createElement('div');
+          el.className = 'ish-card';
+          el.style.left = '50%';
+          el.style.top = AXIS + '%';
+          el.style.width = cardWidth + 'cqw';
+          el.style.height = P.cardHeight + 'cqw';
+          el.style.marginLeft = (-cardWidth / 2) + 'cqw';
+          el.style.marginTop = (-P.cardHeight / 2) + 'cqw';
+          el.style.borderRadius = P.cardRadius + 'cqw';
+          el.style.animation = ANIM_NAME[orientation][side] + ' ' + SPEED + 's linear infinite';
+          el.style.animationDelay = (-(i * SPEED) / CARDS) + 's';
+          var im = document.createElement('img');
+          im.src = img.src;
+          im.alt = '';
+          im.loading = 'lazy';
+          im.decoding = 'async';
+          im.draggable = false;
+          el.appendChild(im);
+          mount.appendChild(el);
+        }
+      });
+    })();
+
+    /* ---------- lightbox ---------- */
+    var lightbox = document.getElementById('lightbox');
+    var lbImg = document.getElementById('lb-img');
+    var lbClose = document.getElementById('lb-close');
+    var lbPrev = document.getElementById('lb-prev');
+    var lbNext = document.getElementById('lb-next');
+    var currentList = [];
+    var currentIndex = 0;
+
+    function showAt(index){
+      if (!currentList.length) return;
+      currentIndex = (index + currentList.length) % currentList.length;
+      var f = currentList[currentIndex];
+      var img = f.querySelector('img');
+      lbImg.src = img.src;
+      lbImg.alt = img.alt;
+    }
+    function openLightbox(frameEl){
+      currentList = visibleFrames();
+      var idx = currentList.indexOf(frameEl);
+      showAt(idx < 0 ? 0 : idx);
+      lightbox.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox(){
+      lightbox.hidden = true;
+      document.body.style.overflow = '';
+    }
+    frames.forEach(function(f){
+      var visual = f.querySelector('.frame-visual');
+      visual.addEventListener('click', function(){ openLightbox(f); });
+      visual.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(f); }
+      });
+    });
+    lbClose.addEventListener('click', closeLightbox);
+    lbPrev.addEventListener('click', function(){ showAt(currentIndex - 1); });
+    lbNext.addEventListener('click', function(){ showAt(currentIndex + 1); });
+    lightbox.addEventListener('click', function(e){ if (e.target === lightbox) closeLightbox(); });
+    document.addEventListener('keydown', function(e){
+      if (lightbox.hidden) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') showAt(currentIndex - 1);
+      if (e.key === 'ArrowRight') showAt(currentIndex + 1);
+    });
+
+    /* ---------- init ---------- */
+    syncFromHash();
+    onScroll();
+  })();
+</script>
