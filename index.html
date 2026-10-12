@@ -619,6 +619,11 @@
        screen height, which left a big empty gap above and below the title */
     .hero-stream{min-height:0;}
     .hero-stream-content{padding-block:72px;}
+    /* phones: once a side-sliding block (the contact page's two columns) has
+       revealed, settle it fully in place. .reveal-init.reveal-left/right out-
+       specify the plain .reveal-in reset, so without this the blocks stayed
+       56px off to the side and got cut off the screen edge */
+    .reveal-in.reveal-left, .reveal-in.reveal-right{transform:none;}
   }
 
   @media (prefers-reduced-motion:reduce){
