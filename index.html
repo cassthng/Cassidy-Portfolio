@@ -597,13 +597,28 @@
   }
   @media (max-width:640px){
     .nav-row{flex-wrap:wrap; row-gap:10px;}
-    .work-wide{grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:24px;}
-    .work-tall{grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:28px 20px;}
+    /* phones: landscape frames get a full-width row each (two 3:2 tiles side by
+       side are too small to read); portrait frames pair up two per row, and an
+       odd one out (tagged .is-orphan in setFilter) sits centred under them
+       instead of hanging off the left */
+    .work-wide, #frame-grid.is-overview .work-wide--triad{grid-template-columns:1fr; gap:20px;}
+    .work-tall{grid-template-columns:1fr 1fr; gap:20px 14px;}
+    .work-tall .frame.is-orphan{grid-column:1 / -1; justify-self:center; width:calc((100% - 14px) / 2);}
     #frame-grid{gap:56px;}
-    .collection{gap:40px;}
+    .collection{gap:32px;}
     .head-right{align-items:flex-start;}
     .form-row{grid-template-columns:1fr;}
-    .teaser-strip a{height:clamp(120px,38vw,190px);}
+    /* phones: the teaser strip becomes a tidy grid — the first frame full
+       width, the rest paired in uniform 4:5 crops — instead of free-flowing
+       fixed-height tiles that land at random widths */
+    .teaser-strip{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .teaser-strip a{height:auto; aspect-ratio:4/5;}
+    .teaser-strip a:first-child{grid-column:1 / -1; aspect-ratio:3/2;}
+    .teaser-strip img{width:100%; height:100%; max-width:100%; object-fit:cover;}
+    /* phones: let the hero hug its content instead of forcing 86% of the
+       screen height, which left a big empty gap above and below the title */
+    .hero-stream{min-height:0;}
+    .hero-stream-content{padding-block:72px;}
   }
 
   @media (prefers-reduced-motion:reduce){
@@ -1276,6 +1291,13 @@
         var anyVisible = col.querySelector('.frame:not([hidden])');
         col.hidden = !anyVisible;
       });
+      // phones pair portrait frames two per row; flag the odd one out so the
+      // mobile CSS can centre it (no styles attach to this on desktop)
+      document.querySelectorAll('.work-tall').forEach(function(group){
+        var vis = group.querySelectorAll('.frame:not([hidden])');
+        group.querySelectorAll('.is-orphan').forEach(function(x){ x.classList.remove('is-orphan'); });
+        if (vis.length % 2 === 1) vis[vis.length - 1].classList.add('is-orphan');
+      });
       if (emptyState) emptyState.hidden = visibleFrames().length > 0;
       if (pushHash) {
         location.hash = '#/works' + (filter === 'all' ? '' : '/' + filter);
@@ -1411,15 +1433,30 @@
         {src:'53-singapore-shophouses.jpg', alt:'A photographer shooting a row of restored shophouses across a quiet street', orientation:'landscape'}
       ];
 
-      var P = {
+      /* Two tunings of the same corridor. Desktop is the original. Phones get
+         their own: everything is measured in % of the hero's width, and a
+         portrait screen is narrow, so the desktop tuning shows only a thin
+         strip of small, far-off cards while the big near ones sweep straight
+         off the sides. The phone tuning uses bigger cards that sweep out
+         less, so they stay on screen while they grow and fill the hero's
+         height; perspective is scaled with card size so the tilt doesn't
+         read as stretching. */
+      var DESKTOP = {
         perspective: 30, cardHeight: 25, cardRadius: 0.4,
         birthHeight: 2.6, exitHeight: 46, railBirth: -11, railExit: 44,
-        fan: 3.3, turnBirth: 3, turnExit: 12, stops: 24
+        fan: 3.3, turnBirth: 3, turnExit: 12, stops: 24, axis: 55
       };
+      var PHONE = {
+        perspective: 53, cardHeight: 44, cardRadius: 0.8,
+        birthHeight: 4, exitHeight: 110, railBirth: -6, railExit: 36,
+        fan: 3.3, turnBirth: 3, turnExit: 10, stops: 24, axis: 50
+      };
+      var phoneMQ = window.matchMedia('(max-width:640px)');
+      var P;
       var CARD_ASPECT = {portrait: 2 / 3, landscape: 3 / 2}; // width / height
       var CARDS = ISH_IMAGES.length;
       var SPEED = 22;   // seconds per full corridor traversal
-      var AXIS = 55;    // vertical placement of the corridor's axis, % of height
+      var AXIS;         // vertical placement of the corridor's axis, % of height
 
       /* The rail/turn constants above were fitted for one reference card
          width (portrait). A wider card centred on the same rail position
@@ -1432,7 +1469,7 @@
          both. Rotation is also kept modest (turnExit above), since tilting
          a wide card hard on its Y-axis reads as a stretched, skewed image —
          narrow cards hide that foreshortening much better than wide ones. */
-      var refHalfWidth = (P.cardHeight * CARD_ASPECT.portrait) / 2;
+      var refHalfWidth;
 
       function ishKeyframes(dir, name, cardHalfWidth){
         var railExit = P.railExit + (cardHalfWidth - refHalfWidth);
@@ -1453,6 +1490,14 @@
       }
 
       var ORIENTATIONS = ['portrait', 'landscape'];
+      var styleEl = document.createElement('style');
+      document.head.appendChild(styleEl);
+
+      function buildCorridor(){
+      P = phoneMQ.matches ? PHONE : DESKTOP;
+      AXIS = P.axis;
+      refHalfWidth = (P.cardHeight * CARD_ASPECT.portrait) / 2;
+      mount.textContent = '';
       var ANIM_NAME = {}; // e.g. ANIM_NAME.portrait.right = 'ish-right-portrait'
       var styleText = '';
       ORIENTATIONS.forEach(function(orientation){
@@ -1462,11 +1507,11 @@
         styleText += ishKeyframes(1, right, halfWidth) + ishKeyframes(-1, left, halfWidth);
         ANIM_NAME[orientation] = {right: right, left: left};
       });
-      var styleEl = document.createElement('style');
       styleEl.textContent = styleText;
-      document.head.appendChild(styleEl);
 
-      frame.querySelector('.ish-perspective').style.perspectiveOrigin = '50% ' + AXIS + '%';
+      var stage = frame.querySelector('.ish-perspective');
+      stage.style.perspective = P.perspective + 'cqw';
+      stage.style.perspectiveOrigin = '50% ' + AXIS + '%';
 
       ['right', 'left'].forEach(function(side){
         for (var i = 0; i < CARDS; i++) {
@@ -1494,6 +1539,12 @@
           mount.appendChild(el);
         }
       });
+      }
+
+      buildCorridor();
+      // rebuild if the screen crosses the phone breakpoint (e.g. rotating a tablet)
+      if (phoneMQ.addEventListener) phoneMQ.addEventListener('change', buildCorridor);
+      else if (phoneMQ.addListener) phoneMQ.addListener(buildCorridor);
     })();
 
     /* ---------- lightbox ---------- */
