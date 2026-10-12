@@ -391,6 +391,9 @@
     padding-block:24px;
   }
   .empty-state[hidden]{display:none;}
+  /* collections and their wide/tall groups set display:flex/grid, which would
+     otherwise override the hidden attribute the filter JS uses to drop empty ones */
+  .collection[hidden], .work-wide[hidden], .work-tall[hidden]{display:none;}
 
   /* wide (landscape-orientation) frames: uniform 3:2 tiles, centered */
   .work-wide{
@@ -831,13 +834,13 @@
 
           <div class="work-tall">
 
-            <article class="frame" data-genre="street" data-featured="false">
+            <article class="frame" data-genre="street" data-featured="true">
               <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
                 <img src="18-hk-street.jpg" alt="A quiet Hong Kong street lined with high-rise apartment blocks">
               </div>
             </article>
 
-            <article class="frame" data-genre="street" data-featured="false">
+            <article class="frame" data-genre="street" data-featured="true">
               <div class="frame-visual" tabindex="0" role="button" aria-label="Open photo">
                 <img src="19-hk-foodstall.jpg" alt="A night food stall in Hong Kong with customers gathered around it">
               </div>
